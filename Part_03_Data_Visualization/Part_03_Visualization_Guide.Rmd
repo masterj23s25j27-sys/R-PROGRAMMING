@@ -1,0 +1,99 @@
+---
+title: "Part 03: Data Visualization & Graphics — Base R & ggplot2"
+author: "R Programming End-to-End Curriculum"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    theme: flatly
+    highlight: tango
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 9,
+  fig.height = 5.5
+)
+```
+
+# Overview of Part 03: Data Visualization
+
+R offers two world-class graphics paradigms:
+
+1. **Base R Graphics (`01_base_r_plotting.R`)** — Fast, zero-dependency, imperative canvas model ideal for quick diagnostics, multi-panel dashboards (`par(mfrow)`), and custom statistical plots.
+2. **The Grammar of Graphics with `ggplot2` (`02_ggplot2_fundamentals.R` & `03_advanced_visualizations.R`)** — Declarative layered system mapping data variables to visual aesthetics, geometries, facets, and publication themes.
+
+---
+
+# Base R Diagnostic & Exploratory Graphics
+
+```{r base-r-dashboard, fig.height=7}
+old_par <- par(mfrow = c(2, 2), mar = c(4.2, 4.2, 2.8, 1.2), las = 1)
+
+# 1. Scatter + Regression
+plot(mtcars$wt, mtcars$mpg, pch = 19, col = "#2b8cbe",
+     xlab = "Weight (1000 lbs)", ylab = "MPG", main = "MPG vs Weight (OLS + LOWESS)")
+abline(lm(mpg ~ wt, data = mtcars), col = "red", lwd = 2, lty = 2)
+lines(lowess(mtcars$wt, mtcars$mpg), col = "darkgreen", lwd = 2)
+
+# 2. Density Histogram
+hist(iris$Sepal.Length, breaks = 15, freq = FALSE, col = "lightblue", border = "white",
+     xlab = "Sepal Length (cm)", main = "Iris Sepal Length Density")
+lines(density(iris$Sepal.Length), col = "navy", lwd = 2)
+
+# 3. Notched Boxplot
+boxplot(mpg ~ cyl, data = mtcars, col = c("#66c2a5", "#fc8d62", "#8da0cb"),
+        xlab = "Cylinders", ylab = "MPG", main = "MPG Distribution by Cylinder")
+
+# 4. ECDF (Empirical Cumulative Distribution Function)
+plot(ecdf(iris$Petal.Length), col = "purple4", lwd = 2,
+     xlab = "Petal Length (cm)", ylab = "Cumulative Probability",
+     main = "Empirical CDF of Petal Length")
+
+par(old_par)
+```
+
+---
+
+# Layered Grammar of Graphics (`ggplot2`)
+
+```{r ggplot-demo}
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  library(ggplot2)
+
+  cars_df <- mtcars
+  cars_df$cyl_fct <- factor(cars_df$cyl, labels = c("4 Cyl", "6 Cyl", "8 Cyl"))
+
+  ggplot(cars_df, aes(x = wt, y = mpg, color = cyl_fct)) +
+    geom_point(size = 3.5, alpha = 0.85) +
+    geom_smooth(method = "lm", formula = y ~ x, se = TRUE, alpha = 0.18) +
+    scale_color_manual(values = c("#1b9e77", "#d95f02", "#7570b3")) +
+    labs(
+      title = "Vehicle Weight vs Fuel Efficiency by Engine Class",
+      subtitle = "Within-group linear trends with 95% confidence intervals",
+      x = "Weight (1,000 lbs)",
+      y = "Miles Per Gallon (MPG)",
+      color = "Cylinder Group"
+    ) +
+    theme_minimal(base_size = 13)
+}
+```
+
+---
+
+# Choosing the Right Visualization
+
+| Analytical Goal | Best Chart Types | R Function (`Base` / `ggplot2`) |
+|:---|:---|:---|
+| **Univariate Distribution** | Histogram, Density, Boxplot, Violin, ECDF | `hist()`, `geom_histogram()`, `geom_violin()`, `stat_ecdf()` |
+| **Bivariate Relationship** | Scatter Plot + Smooth Trend, Hexbin | `plot()`, `geom_point() + geom_smooth()`, `geom_hex()` |
+| **Group Comparison** | Grouped Boxplot, Raincloud, Cleveland Dot | `boxplot()`, `geom_boxplot() + geom_jitter()` |
+| **Multivariate / Correlation** | Annotated Heatmap, Pairs Matrix, Facets | `pairs()`, `geom_tile()`, `facet_wrap()` |
+| **Time Series & Uncertainty** | Line Chart with Confidence Ribbon | `ts.plot()`, `geom_line() + geom_ribbon()` |
