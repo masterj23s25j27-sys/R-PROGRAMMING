@@ -88,3 +88,4 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 } else {
   cat("Install `ggplot2` via install.packages('ggplot2') to render Grammar of Graphics plots.\n")
 }
+

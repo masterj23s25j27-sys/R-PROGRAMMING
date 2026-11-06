@@ -200,3 +200,4 @@ knitr::kable(round(summary_matrix, 2), caption = "Type-safe summary table using 
 - **Understand vectorization**: operations in R act element-wise across entire vectors without needing explicit `for` loops.
 - **When writing loops**, pre-allocate your output vector (`numeric(n)`, `vector("list", n)`) and iterate with `seq_along(x)`.
 - **Use `[[` or `$`** to extract elements from a list or data frame, and `[` to slice subsets while keeping the container structure.
+

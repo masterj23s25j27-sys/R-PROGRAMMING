@@ -122,3 +122,4 @@ parallel_boot_means <- parSapply(cl, 1:4, function(worker_task_id) {
 
 stopCluster(cl)
 cat("Parallel cluster task results:", round(parallel_boot_means, 4), "\n")
+

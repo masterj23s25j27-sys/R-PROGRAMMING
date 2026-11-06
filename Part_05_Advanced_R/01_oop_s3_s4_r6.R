@@ -170,3 +170,4 @@ if (requireNamespace("R6", quietly = TRUE)) {
   limiter$acquire()
   limiter$status() # Mutated in-place without reassignment (`<-`)!
 }
+

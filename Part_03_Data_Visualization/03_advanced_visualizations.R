@@ -103,3 +103,4 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
   ggsave(file.path(out_dir, "p6_dumbbell.png"), p_dumbbell, width = 8, height = 4.5, dpi = 150)
   cat("Saved advanced visualizations to:", out_dir, "\n")
 }
+

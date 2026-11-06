@@ -89,3 +89,4 @@ boot_ci <- quantile(boot_medians, probs = c(0.025, 0.975))
 cat("\n--- 4. Non-Parametric Bootstrap (2,000 Resamples) ---\n")
 cat(sprintf("Sample Median MPG: %.2f | 95%% Percentile Bootstrap CI: [%.2f, %.2f]\n",
             median(mtcars$mpg), boot_ci[1], boot_ci[2]))
+

@@ -187,3 +187,4 @@ new_student <- data.frame(
 )
 students_df <- rbind(students_df, new_student)
 cat("Updated row count:", nrow(students_df), "\n")
+

@@ -116,3 +116,4 @@ if (has_lubridate) {
   next_quarter <- parsed_ymd + months(3) + days(15)
   cat("2026-07-24 + 3 months + 15 days =", as.character(next_quarter), "\n")
 }
+

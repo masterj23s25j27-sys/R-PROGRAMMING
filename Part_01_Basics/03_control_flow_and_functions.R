@@ -186,3 +186,4 @@ print(safe_means)
 
 # 4.3 `tapply(X, INDEX, FUN)`: Grouped aggregation by factor levels
  print(tapply(mtcars$mpg, mtcars$cyl, mean))
+

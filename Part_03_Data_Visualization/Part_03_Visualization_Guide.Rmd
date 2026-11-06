@@ -97,3 +97,4 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 | **Group Comparison** | Grouped Boxplot, Raincloud, Cleveland Dot | `boxplot()`, `geom_boxplot() + geom_jitter()` |
 | **Multivariate / Correlation** | Annotated Heatmap, Pairs Matrix, Facets | `pairs()`, `geom_tile()`, `facet_wrap()` |
 | **Time Series & Uncertainty** | Line Chart with Confidence Ribbon | `ts.plot()`, `geom_line() + geom_ribbon()` |
+

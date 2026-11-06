@@ -144,3 +144,4 @@ if (has_dplyr) {
   agg <- aggregate(net_revenue ~ region + category, data = transactions, FUN = sum)
   print(agg[order(-agg$net_revenue), ])
 }
+

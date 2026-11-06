@@ -208,3 +208,4 @@ cat(sprintf("Exercise 1 - Final Amount after %d years: $%.2f\n", t, A))
 raw_inputs <- c("45.2", "19.8", "NA", "35.0")
 suppressWarnings(clean_nums <- as.numeric(raw_inputs))
 cat("Exercise 2 - Sum of valid inputs:", sum(clean_nums, na.rm = TRUE), "\n")
+
