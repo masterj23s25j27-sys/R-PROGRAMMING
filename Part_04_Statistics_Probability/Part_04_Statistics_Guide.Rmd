@@ -1,0 +1,82 @@
+---
+title: "Part 04: Probability, Statistical Inference & Regression Modeling"
+author: "R Programming End-to-End Curriculum"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    theme: flatly
+    highlight: tango
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 9,
+  fig.height = 5.5
+)
+```
+
+# Overview of Part 04: Statistics & Probability
+
+This guide synthesizes the mathematical and programmatic foundations from Part 04:
+
+1. **`01_descriptive_stats_and_distributions.R`** — Robust estimators, correlation, the `d/p/q/r` probability distribution system, and Monte Carlo simulations.
+2. **`02_hypothesis_testing_and_anova.R`** — Parametric and non-parametric hypothesis testing (`t.test`, `wilcox.test`, `prop.test`, `aov`, `TukeyHSD`, and `p.adjust`).
+3. **`03_regression_and_glm.R`** — Ordinary Least Squares (`lm`), Generalized Linear Models (`glm`), model diagnostics, and Bootstrap resampling.
+
+---
+
+# Probability Distributions & The Central Limit Theorem
+
+Every distribution in R follows the four-prefix convention:
+
+- `d<dist>(x)`: Probability Density / Mass Function $f(x)$
+- `p<dist>(q)`: Cumulative Distribution Function $F(q) = P(X \le q)$
+- `q<dist>(p)`: Quantile Function $F^{-1}(p)$
+- `r<dist>(n)`: Random Variate Generator
+
+```{r clt-simulation}
+set.seed(42)
+pop_draws  <- rexp(10000, rate = 0.5)
+clt_means  <- replicate(4000, mean(rexp(40, rate = 0.5)))
+
+old_par <- par(mfrow = c(1, 2), mar = c(4.2, 4.2, 3, 1.2))
+hist(pop_draws, breaks = 40, freq = FALSE, col = "#fc8d62", border = "white",
+     main = "Skewed Population: Exp(rate = 0.5)", xlab = "Value")
+hist(clt_means, breaks = 35, freq = FALSE, col = "#66c2a5", border = "white",
+     main = "Sample Means (n = 40) -> Normal!", xlab = "Sample Mean")
+curve(dnorm(x, mean = 2, sd = 2 / sqrt(40)), add = TRUE, col = "navy", lwd = 2.5)
+par(old_par)
+```
+
+---
+
+# Hypothesis Testing Decision Matrix
+
+| Goal | Parametric Test | Non-Parametric Counterpart |
+|:---|:---|:---|
+| **Compare 2 Independent Means/Locations** | `t.test(y ~ group)` (Welch) | `wilcox.test(y ~ group)` (Mann-Whitney U) |
+| **Compare Paired Measurements** | `t.test(y1, y2, paired = TRUE)` | `wilcox.test(y1, y2, paired = TRUE)` |
+| **Compare $\ge 3$ Independent Groups** | `aov(y ~ group)` + `TukeyHSD()` | `kruskal.test(y ~ group)` |
+| **Categorical Association / Proportions** | `chisq.test()`, `prop.test()` | `fisher.test()` (exact for small counts) |
+
+---
+
+# Linear & Generalized Linear Regression Diagnostics
+
+```{r regression-diagnostics, fig.height=7}
+fit <- lm(mpg ~ wt * hp, data = mtcars)
+knitr::kable(round(coef(summary(fit)), 4), caption = "OLS Regression Coefficients (`mpg ~ wt * hp`)")
+
+# Standard 4-Panel Diagnostic Plot
+old_par <- par(mfrow = c(2, 2), mar = c(4.2, 4.2, 2.5, 1.2))
+plot(fit, pch = 19, col = "#2b8cbe")
+par(old_par)
+```
