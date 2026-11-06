@@ -1,0 +1,110 @@
+---
+title: "Part 05: Advanced R Programming — OOP, Functional Programming & Performance"
+author: "R Programming End-to-End Curriculum"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    theme: flatly
+    highlight: tango
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+# Overview of Part 05: Advanced R
+
+To transition from an R data analyst to a senior R software engineer and package author, you need to understand how R works under the hood:
+
+1. **`01_oop_s3_s4_r6.R`** — Object-Oriented Programming across S3 (generic dispatch), S4 (formal typed slots), and R6 (encapsulated mutable reference classes).
+2. **`02_functional_programming_and_metaprogramming.R`** — Closures, function factories, higher-order functions (`Reduce`, `purrr`), environments, and Non-Standard Evaluation (NSE / AST manipulation).
+3. **`03_error_handling_debugging_performance.R`** — Condition handling (`tryCatch`), memory pre-allocation, hash-environment memoisation, and multi-core `parallel` computing.
+
+---
+
+# Comparing R's Object-Oriented Systems
+
+| Feature | **S3** | **S4** | **R6** |
+|:---|:---|:---|:---|
+| **Paradigm** | Functional OOP (Method belongs to Generic) | Functional OOP (Multiple Dispatch) | Encapsulated OOP (Method belongs to Object) |
+| **Semantics** | Copy-on-modify (Immutable value semantics) | Copy-on-modify | Reference semantics (In-place mutation) |
+| **Definition** | `structure(list(...), class = "my_class")` | `setClass("MyClass", slots = c(...))` | `R6Class("MyClass", public = list(...))` |
+| **Primary Ecosystem** | Base R (`lm`, `data.frame`), `tidyverse`, `tidymodels` | Bioconductor, `Matrix`, `sp` | `shiny`, `mlr3`, stateful clients |
+
+```{r s3-example}
+# Clean S3 Class & Generic Method Example
+new_model_metric <- function(name, value, higher_is_better = TRUE) {
+  structure(
+    list(name = name, value = value, higher_is_better = higher_is_better),
+    class = "model_metric"
+  )
+}
+
+print.model_metric <- function(x, ...) {
+  direction <- if (x$higher_is_better) "(+)" else "(-)"
+  cat(sprintf("[%s %s]: %.4f\n", x$name, direction, x$value))
+  invisible(x)
+}
+
+rmse_metric <- new_model_metric("RMSE", 2.3415, higher_is_better = FALSE)
+auc_metric  <- new_model_metric("ROC-AUC", 0.9482, higher_is_better = TRUE)
+print(rmse_metric)
+print(auc_metric)
+```
+
+---
+
+# Function Factories, Closures & Hash-Environment Caching
+
+Because every function in R captures a reference to its enclosing environment, we can build fast $O(1)$ hash-table caches using `new.env(hash = TRUE)`:
+
+```{r closure-cache}
+make_running_stats <- function() {
+  n <- 0L
+  mean_val <- 0.0
+  m2 <- 0.0
+  # Welford's online algorithm for O(1) streaming mean & variance
+  list(
+    update = function(x) {
+      n <<- n + 1L
+      delta <- x - mean_val
+      mean_val <<- mean_val + delta / n
+      delta2 <- x - mean_val
+      m2 <<- m2 + delta * delta2
+      invisible(NULL)
+    },
+    summary = function() {
+      c(n = n, mean = mean_val, sd = if (n > 1L) sqrt(m2 / (n - 1L)) else NA_real_)
+    }
+  )
+}
+
+tracker <- make_running_stats()
+for (v in c(12, 15, 18, 22, 14, 19)) tracker$update(v)
+round(tracker$summary(), 3)
+```
+
+---
+
+# Non-Standard Evaluation (NSE) & Code as Data
+
+```{r metaprogramming}
+# Building a dynamic SQL/filter expression generator from user symbols
+build_summary_expr <- function(metric_col) {
+  col_sym <- substitute(metric_col)
+  bquote(mean(.(col_sym), na.rm = TRUE))
+}
+
+generated_call <- build_summary_expr(mpg)
+cat("Generated R Call:", deparse(generated_call), "\n")
+cat("Evaluated on `mtcars`:", eval(generated_call, envir = mtcars), "\n")
+```
