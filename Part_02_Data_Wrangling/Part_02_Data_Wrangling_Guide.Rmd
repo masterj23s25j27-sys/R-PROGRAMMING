@@ -1,0 +1,138 @@
+---
+title: "Part 02: Data Wrangling & The Tidyverse — Complete Guide"
+author: "R Programming End-to-End Curriculum"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    theme: flatly
+    highlight: tango
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  comment = "#>"
+)
+```
+
+# Overview of Part 02: Data Wrangling
+
+Up to 80% of any data science project is spent importing, cleaning, transforming, and joining data. Part 02 covers the complete modern R data-wrangling toolkit:
+
+1. **`01_data_import_export_tidyr.R`** — Fast file I/O (`readr`, `.rds`) and reshaping untidy data (`tidyr::pivot_longer`, `pivot_wider`).
+2. **`02_dplyr_data_manipulation.R`** — The grammar of data manipulation (`filter`, `select`, `mutate`, `across`, `summarise`, window functions, and relational joins).
+3. **`03_strings_factors_dates.R`** — Text processing & regular expressions (`stringr`), factor engineering (`forcats`), and date-time arithmetic (`lubridate`).
+
+---
+
+# Tidy Data & Reshaping
+
+A dataset is **tidy** when:
+
+1. Each variable is in its own column.
+2. Each observation is in its own row.
+3. Each value is in its own cell.
+
+```{r tidy-reshape}
+wide_metrics <- data.frame(
+  model    = c("RandomForest", "XGBoost", "LightGBM"),
+  acc_2025 = c(0.88, 0.91, 0.90),
+  acc_2026 = c(0.90, 0.94, 0.93)
+)
+
+# Base R / tidyr reshaping demonstration
+if (requireNamespace("tidyr", quietly = TRUE)) {
+  library(tidyr)
+  tidy_metrics <- wide_metrics |>
+    pivot_longer(
+      cols = starts_with("acc_"),
+      names_to = "year",
+      names_prefix = "acc_",
+      values_to = "accuracy"
+    )
+} else {
+  tidy_metrics <- data.frame(
+    model    = rep(wide_metrics$model, each = 2),
+    year     = rep(c("2025", "2026"), times = 3),
+    accuracy = c(t(as.matrix(wide_metrics[, 2:3])))
+  )
+}
+knitr::kable(tidy_metrics, caption = "Tidy Model Accuracy Table")
+```
+
+---
+
+# Mastering `dplyr` Pipelines & Joins
+
+## The 6 Core Verbs of `dplyr`
+
+| Verb | Purpose | SQL Equivalent |
+|:---|:---|:---|
+| `filter()` | Subset rows by logical condition | `WHERE` / `HAVING` |
+| `select()` | Pick or drop columns by name or predicate | `SELECT` |
+| `arrange()` | Reorder rows ascending or `desc()` | `ORDER BY` |
+| `mutate()` | Create or transform columns | Computed columns |
+| `group_by()` | Partition rows into groups | `GROUP BY` |
+| `summarise()` | Collapse groups into single-row summaries | Aggregate functions (`SUM`, `AVG`) |
+
+```{r dplyr-demo}
+# Using built-in `mtcars` dataset
+mtcars_df <- mtcars
+mtcars_df$model <- rownames(mtcars)
+
+if (requireNamespace("dplyr", quietly = TRUE)) {
+  library(dplyr)
+  cyl_summary <- mtcars_df |>
+    mutate(kpl = mpg * 0.425144, hp_per_ton = hp / wt) |>
+    group_by(cyl) |>
+    summarise(
+      n_cars       = n(),
+      avg_mpg      = round(mean(mpg), 1),
+      avg_hp_ton   = round(mean(hp_per_ton), 1),
+      top_car      = model[which.max(mpg)],
+      .groups      = "drop"
+    ) |>
+    arrange(desc(avg_mpg))
+} else {
+  cyl_summary <- aggregate(cbind(mpg, hp) ~ cyl, data = mtcars_df, FUN = mean)
+}
+
+knitr::kable(cyl_summary, caption = "Grouped Vehicle Performance Summary by Cylinder Count")
+```
+
+---
+
+# Strings, Regular Expressions, Factors & Dates
+
+## Extracting Structured Fields from Unstructured Text
+
+```{r regex-extraction}
+product_codes <- c("SKU-9041-PRO ($149.99)", "SKU-1022-STD ($49.50)", "SKU-8830-ENT ($499.00)")
+
+sku_id <- sub(".*(SKU-[0-9]+-[A-Z]+).*", "\\1", product_codes)
+price  <- as.numeric(sub(".*\\$([0-9.]+)\\).*", "\\1", product_codes))
+
+knitr::kable(data.frame(raw = product_codes, sku_id = sku_id, price_usd = price))
+```
+
+## Date-Time Arithmetic
+
+```{r dates-demo}
+launch_date <- as.Date("2026-01-15")
+milestones  <- seq(from = launch_date, by = "3 months", length.out = 4)
+
+milestone_df <- data.frame(
+  milestone = paste("Phase", 1:4),
+  date      = milestones,
+  day_name  = format(milestones, "%A"),
+  days_from_launch = as.numeric(milestones - launch_date)
+)
+knitr::kable(milestone_df, caption = "Project Roadmap Milestones")
+```
