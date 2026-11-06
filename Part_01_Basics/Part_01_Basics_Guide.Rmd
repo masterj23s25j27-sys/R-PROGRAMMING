@@ -1,0 +1,202 @@
+---
+title: "Part 01: R Basics & Fundamentals — Complete Interactive Guide"
+author: "R Programming End-to-End Curriculum"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    theme: flatly
+    highlight: tango
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 5
+)
+```
+
+# Overview of Part 01
+
+Welcome to **Part 01** of the End-to-End R Programming Curriculum! This document brings together the core concepts from:
+
+1. `01_variables_and_datatypes.R` — Variables, Atomic Types, Coercion, Operators, and Special Values (`NA`, `NaN`, `Inf`, `NULL`).
+2. `02_data_structures.R` — Vectors, Factors, Matrices, Arrays, Lists, and Data Frames.
+3. `03_control_flow_and_functions.R` — Conditionals, Loops, Custom Functions, and the `apply` family.
+
+---
+
+# Variables, Atomic Data Types & Operators
+
+## Variable Assignment & Atomic Types
+
+In R, everything is an object, and every atomic vector is built from one of six fundamental types (`logical`, `integer`, `double`/`numeric`, `complex`, `character`, `raw`).
+
+```{r atomic-types}
+# Variable assignment
+learning_rate <- 0.015       # double (numeric)
+epochs        <- 150L        # integer (note the 'L' suffix)
+model_name    <- "XGBoost"   # character
+converged     <- TRUE        # logical
+
+# Inspecting class vs low-level storage type
+type_summary <- data.frame(
+  Object = c("learning_rate", "epochs", "model_name", "converged"),
+  Class  = c(class(learning_rate), class(epochs), class(model_name), class(converged)),
+  Typeof = c(typeof(learning_rate), typeof(epochs), typeof(model_name), typeof(converged))
+)
+knitr::kable(type_summary, caption = "Comparison of `class()` and `typeof()` across core R objects")
+```
+
+## Type Coercion Hierarchy
+
+When you combine mixed types inside a single atomic vector `c()`, R implicitly coerces all elements to the most flexible type following this hierarchy:
+
+$$\text{logical} \rightarrow \text{integer} \rightarrow \text{double (numeric)} \rightarrow \text{complex} \rightarrow \text{character}$$
+
+```{r coercion}
+mixed_1 <- c(TRUE, 10L, 3.14)       # Coerced to numeric (double)
+mixed_2 <- c(TRUE, 10L, "R_Rocks")  # Coerced to character
+
+cat("mixed_1:", mixed_1, "| typeof:", typeof(mixed_1), "\n")
+cat("mixed_2:", mixed_2, "| typeof:", typeof(mixed_2), "\n")
+```
+
+## Handling Special Values (`NA`, `NaN`, `Inf`, `NULL`)
+
+```{r special-values}
+measurements <- c(14.2, 18.9, NA, 21.4, 16.0, NA, 19.5)
+
+cat("Total length:       ", length(measurements), "\n")
+cat("Missing count:      ", sum(is.na(measurements)), "\n")
+cat("Complete cases mean:", round(mean(measurements, na.rm = TRUE), 2), "\n")
+```
+
+---
+
+# Core Data Structures
+
+R's data structures are classified by dimensionality and type homogeneity:
+
+| Dimension | Homogeneous (Single Type) | Heterogeneous (Mixed Types) |
+|:---|:---|:---|
+| **1D** | Atomic Vector (`c()`) | List (`list()`) |
+| **2D** | Matrix (`matrix()`) | Data Frame (`data.frame()`, `tibble()`) |
+| **nD** | Array (`array()`) | — |
+
+## Vectors & Indexing
+
+R uses **1-based indexing** and supports four powerful ways to subset any structure:
+
+```{r vector-subsetting}
+temps <- c(Mon = 22.5, Tue = 25.1, Wed = 19.8, Thu = 28.4, Fri = 30.2, Sat = 27.0, Sun = 24.3)
+
+# 1. Positive integers
+temps[c(1, 5)]
+
+# 2. Negative integers (exclude weekend)
+temps[-c(6, 7)]
+
+# 3. Logical mask (days above 25C)
+temps[temps > 25]
+
+# 4. Character names
+temps[c("Wed", "Sat")]
+```
+
+## Factors for Categorical Data
+
+```{r factors}
+risk_levels <- factor(
+  c("Medium", "Low", "Critical", "High", "Low", "Critical", "Medium"),
+  levels = c("Low", "Medium", "High", "Critical"),
+  ordered = TRUE
+)
+table(risk_levels)
+```
+
+## Matrices & Linear Algebra
+
+```{r matrices}
+# Solving a system of linear equations: A * x = b
+# 3x + 2y = 18
+#  x + 4y = 16
+A <- matrix(c(3, 2, 1, 4), nrow = 2, byrow = TRUE)
+b <- c(18, 16)
+
+solution <- solve(A, b)
+names(solution) <- c("x", "y")
+print(solution)
+```
+
+## Lists & Data Frames
+
+```{r dataframes}
+portfolio_df <- data.frame(
+  ticker   = c("AAPL", "MSFT", "GOOGL", "NVDA", "AMZN"),
+  sector   = factor(c("Tech", "Tech", "Comm", "Semiconductors", "Consumer")),
+  shares   = c(50L, 40L, 60L, 80L, 45L),
+  price    = c(195.2, 420.5, 175.8, 125.4, 185.0),
+  dividend = c(TRUE, TRUE, TRUE, TRUE, FALSE)
+)
+
+portfolio_df$market_value <- portfolio_df$shares * portfolio_df$price
+ portfolio_df <- portfolio_df[order(-portfolio_df$market_value), ]
+knitr::kable(portfolio_df, digits = 2, row.names = FALSE, caption = "Sorted Investment Portfolio Data Frame")
+```
+
+---
+
+# Control Flow, Functions & Vectorization
+
+## Writing Clean, Reusable Functions
+
+```{r custom-functions}
+#' Robust Z-Score Standardization (using Median and MAD)
+#' @param x Numeric vector
+#' @param na.rm Logical; remove NA values before calculation
+robust_zscore <- function(x, na.rm = TRUE) {
+  stopifnot(is.numeric(x))
+  med <- median(x, na.rm = na.rm)
+  mad_val <- mad(x, na.rm = na.rm)
+  if (mad_val == 0) stop("MAD is zero; cannot standardize constant vector.")
+  (x - med) / mad_val
+}
+
+raw_signal <- c(10, 12, 11, 13, 12, 95, 11, 10) # 95 is an extreme outlier
+round(robust_zscore(raw_signal), 2)
+```
+
+## The `apply` Family in Action
+
+```{r apply-family}
+# Compute multiple summary statistics across numeric columns of iris
+iris_numeric <- iris[, 1:4]
+
+summary_matrix <- vapply(
+  iris_numeric,
+  FUN = function(col) {
+    c(Mean = mean(col), SD = sd(col), Median = median(col), IQR = IQR(col))
+  },
+  FUN.VALUE = numeric(4)
+)
+
+knitr::kable(round(summary_matrix, 2), caption = "Type-safe summary table using `vapply()` on `iris`")
+```
+
+---
+
+# Summary & Key Takeaways
+
+- **Always prefer `<-` for assignment** and `TRUE` / `FALSE` over `T` / `F`.
+- **Understand vectorization**: operations in R act element-wise across entire vectors without needing explicit `for` loops.
+- **When writing loops**, pre-allocate your output vector (`numeric(n)`, `vector("list", n)`) and iterate with `seq_along(x)`.
+- **Use `[[` or `$`** to extract elements from a list or data frame, and `[` to slice subsets while keeping the container structure.

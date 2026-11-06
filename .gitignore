@@ -1,0 +1,18 @@
+# RStudio & R files
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# Knitr / RMarkdown cache & output
+*_cache/
+*_files/
+*.html
+*.pdf
+*.docx
+
+# Temporary files
+*~
+.DS_Store
+Thumbs.db
